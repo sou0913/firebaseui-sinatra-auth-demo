@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>投稿フォーム</title>
+
+    <!-- firebase project -->
+    <!-- This is core sdk -->
+    <script src="https://www.gstatic.com/firebasejs/8.2.0/firebase-app.js"></script>
+    <!-- This is auth sdk -->
+    <script src="https://www.gstatic.com/firebasejs/7.23.0/firebase-auth.js"></script>
+
+    <script>
+      // Firebase configuration
+      var firebaseConfig = {
+        apiKey: "AIzaSyCZItov1a-e9mDDhLceo2DqPnknON2WgLk",
+        authDomain: "benkyo-83021.firebaseapp.com",
+        databaseURL: "https://benkyo-83021.firebaseio.com",
+        projectId: "benkyo-83021",
+        storageBucket: "benkyo-83021.appspot.com",
+        messagingSenderId: "1076338876851",
+        appId: "1:1076338876851:web:a9eabc120cf2165c33ebc6",
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <!-- vue cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    <!-- axios cdn -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.0/axios.min.js"
+      integrity="sha512-DZqqY3PiOvTP9HkjIWgjO6ouCbq+dxqWoJZ/Q+zPYNHmlnI2dQnbJ5bxAHpAMw+LXRm4D72EIRXzvcHQtE8/VQ=="
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      input {
+        display: block;
+      }
+      textarea {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <form method="post" @submit.prevent="onSubmit">
+        <label
+          >タイトル: <input name="title" v-model="title" required autofocus
+        /></label>
+        <label
+          >内容:
+          <textarea
+            name="content"
+            v-model="content"
+            required
+            rows="10"
+            cols="100"
+          ></textarea>
+        </label>
+        <input type="submit" />
+      </form>
+    </div>
+
+    <script>
+      new Vue({
+        el: "#app",
+        data: {
+          title: "",
+          content: "",
+          user: null,
+        },
+        created() {
+          firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+              this.user = user;
+            } else {
+              console.log('logging out now');
+            }
+          });
+        },
+        methods: {
+          onSubmit() {
+            if (!this.user) {
+              alert("ログインが必要です");
+              window.location.href = "/index.html";
+              return;
+            }
+            this.user
+              .getIdToken(true)
+              .then((idToken) => {
+                axios
+                  .post(
+                    "http://localhost:4567/posts",
+                    {
+                      title: this.title,
+                      content: this.content,
+                    },
+                    {
+                      headers: {
+                        Authorization: `Bearer ${idToken}`,
+                      },
+                    }
+                  )
+                  .then((res) => {
+                    console.log(res.data);
+                  })
+                  .catch((err) => {
+                    console.error(err);
+                  });
+              })
+              .catch((err) => {
+                console.error(err);
+              });
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
